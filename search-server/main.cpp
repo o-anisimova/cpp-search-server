@@ -1,8 +1,3 @@
-// Решите загадку: Сколько чисел от 1 до 1000 содержат как минимум одну цифру 3?
-// Напишите ответ здесь: 271
-
-// Закомитьте изменения и отправьте их в свой репозиторий.
-
 #include <algorithm>
 #include <iostream>
 #include <set>
@@ -69,9 +64,10 @@ public:
     void AddDocument(int document_id, const string& document) {
         const vector<string> words= SplitIntoWordsNoStop(document);
         
+		const double word_weight = 1.0/words.size();
+		
         for (const string& word : words){
-            const double tf = count(words.begin(), words.end(), word)/static_cast<double>(words.size());
-            word_to_document_freqs_[word].insert({document_id, tf});
+            word_to_document_freqs_[word][document_id] += word_weight;
         }
     }
 
@@ -131,6 +127,10 @@ private:
         }
         return {plus_words, minus_words};
     }
+	
+	double CalculateIdf (const string& word) const {
+		return log(document_count_/static_cast<double>(word_to_document_freqs_.at(word).size()));
+	}
 
     vector<Document> FindAllDocuments(const Query& query_words) const {
         map<int, double> document_relevance;
@@ -141,7 +141,7 @@ private:
             //проверим, что такое слово есть в словаре
             if (word_to_document_freqs_.count(word) > 0){
                 
-				const double idf = log(document_count_/static_cast<double>(word_to_document_freqs_.at(word).size()));
+			    const double idf = CalculateIdf(word);
                 
                 for (const auto&[doc_id, tf] : word_to_document_freqs_.at(word)){
                     document_relevance[doc_id] += idf*tf;
