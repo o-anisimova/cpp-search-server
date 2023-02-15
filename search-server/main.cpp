@@ -128,9 +128,9 @@ private:
         return {plus_words, minus_words};
     }
 	
-	double CalculateIdf (const string& word) const {
-		return log(document_count_/static_cast<double>(word_to_document_freqs_.at(word).size()));
-	}
+    double CalculateIdf (const string& word) const {
+	return log(document_count_/static_cast<double>(word_to_document_freqs_.at(word).size()));
+    }
 
     vector<Document> FindAllDocuments(const Query& query_words) const {
         map<int, double> document_relevance;
