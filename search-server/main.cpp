@@ -64,7 +64,7 @@ public:
     void AddDocument(int document_id, const string& document) {
         const vector<string> words= SplitIntoWordsNoStop(document);
         
-		const double word_weight = 1.0/words.size();
+	const double word_weight = 1.0/words.size();
 		
         for (const string& word : words){
             word_to_document_freqs_[word][document_id] += word_weight;
@@ -141,7 +141,7 @@ private:
             //проверим, что такое слово есть в словаре
             if (word_to_document_freqs_.count(word) > 0){
                 
-			    const double idf = CalculateIdf(word);
+		const double idf = CalculateIdf(word);
                 
                 for (const auto&[doc_id, tf] : word_to_document_freqs_.at(word)){
                     document_relevance[doc_id] += idf*tf;
