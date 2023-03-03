@@ -232,7 +232,7 @@ private:
         if (!IsValidWord(text)) {
             throw invalid_argument("Query contains special characters"s);
         }
-        else if (text[0] == '-' && text.size() == 1) {
+        else if (text == "-"s) {
             throw invalid_argument("Empty minus-word"s);
         }
         else if (text[0] == '-' && text[1] == '-') {
@@ -317,8 +317,8 @@ private:
     }
 
     template <typename StringContainer>
-    void AreValidWords(const StringContainer& words) {
-        for (const string& word : stop_words_) {
+    static void AreValidWords(const StringContainer& words) {
+        for (const string& word : words) {
             if (!IsValidWord(word)) {
                 throw invalid_argument("Word contains special characters: "s + word);
             }
