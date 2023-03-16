@@ -7,12 +7,7 @@ public:
     explicit RequestQueue(SearchServer& search_server);
     
     template <typename DocumentPredicate>
-    vector<Document> AddFindRequest(const string& raw_query, DocumentPredicate document_predicate) {
-        // напишите реализацию
-        vector<Document> document_list = search_server_.FindTopDocuments(raw_query, document_predicate);
-        AddRequest(raw_query, document_list);
-        return document_list;
-    }
+    vector<Document> AddFindRequest(const string& raw_query, DocumentPredicate document_predicate);
     
     vector<Document> AddFindRequest(const string& raw_query, DocumentStatus status);
     
@@ -35,3 +30,10 @@ private:
 
     void AddRequest(const string& raw_query, const vector<Document>& document_list);
 };
+
+template <typename DocumentPredicate>
+vector<Document> RequestQueue::AddFindRequest(const string& raw_query, DocumentPredicate document_predicate) {
+    vector<Document> document_list = search_server_.FindTopDocuments(raw_query, document_predicate);
+    AddRequest(raw_query, document_list);
+    return document_list;
+}
