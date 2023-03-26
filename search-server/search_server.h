@@ -1,6 +1,7 @@
 #pragma once
 #include "string_processing.h"
 #include "document.h"
+#include "log_duration.h"
 #include <string>
 #include <vector>
 #include <set>
@@ -83,6 +84,8 @@ SearchServer::SearchServer(const StringContainer& stop_words)
 
 template <typename DocumentPredicate>
 vector<Document> SearchServer::FindTopDocuments(const string& raw_query, DocumentPredicate document_predicate) const {
+    LOG_DURATION_STREAM("Operation time"s, cout);
+
     const Query query = ParseQuery(raw_query);
     vector<Document> result = FindAllDocuments(query, document_predicate);
 
