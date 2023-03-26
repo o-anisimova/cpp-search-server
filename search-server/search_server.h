@@ -19,7 +19,9 @@ public:
 
     explicit SearchServer(const string& stop_words_text);
 
-    int GetDocumentId(int index) const;
+    vector<int>::const_iterator begin() const;
+
+    vector<int>::const_iterator end() const;
 
     void AddDocument(int document_id, const string& document, DocumentStatus status, const vector<int>& ratings);
 
@@ -42,7 +44,7 @@ private:
     const set<string> stop_words_;
     map<string, map<int, double>> word_to_document_freqs_;
     map<int, DocumentData> documents_;
-    vector <int> document_ids_;
+    vector<int> document_ids_;
 
     bool IsStopWord(const string& word) const;
 

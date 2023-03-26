@@ -7,12 +7,12 @@ SearchServer::SearchServer(const string& stop_words_text)
         : SearchServer(SplitIntoWords(stop_words_text)) {
 }
 
-int SearchServer::GetDocumentId(int index) const {
-    if (index < 0 || index >= GetDocumentCount()) {
-        throw out_of_range("Invalid document ID"s);
-    }
+vector<int>::const_iterator SearchServer::begin() const {
+    return document_ids_.begin();
+}
 
-    return document_ids_[index];
+vector<int>::const_iterator SearchServer::end() const {
+    return document_ids_.end();
 }
 
 void SearchServer::AddDocument(int document_id, const string& document, DocumentStatus status,
@@ -53,8 +53,6 @@ int SearchServer::GetDocumentCount() const {
 tuple<vector<string>, DocumentStatus> SearchServer::MatchDocument(const string& raw_query, int document_id) const {
     vector<string> matched_words;
     LOG_DURATION_STREAM("Operation time"s, cout);
-
-
 
     const Query query = ParseQuery(raw_query);
 
