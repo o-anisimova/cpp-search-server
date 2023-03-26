@@ -20,6 +20,9 @@ int main() {
             cout << *page << endl;
             cout << "Page break"s << endl;
         }
+
+        cout << endl;
+
     }
 
     {

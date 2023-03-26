@@ -25,9 +25,9 @@ private:
 };
 
 template <typename Iterator>
-std::ostream& std::operator<<(ostream& output, IteratorRange<Iterator> iterator_range) {
+std::ostream& operator<<(std::ostream& output, IteratorRange<Iterator> iterator_range) {
     for (auto it = iterator_range.begin(); it != iterator_range.end(); ++it) {
-        cout << *it;
+        output << *it;
     }
 
     return output;
