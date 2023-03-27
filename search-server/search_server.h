@@ -19,9 +19,9 @@ public:
 
     explicit SearchServer(const string& stop_words_text);
 
-    vector<int>::const_iterator begin() const;
+    vector<int>::iterator begin();
 
-    vector<int>::const_iterator end() const;
+    vector<int>::iterator end();
 
     void AddDocument(int document_id, const string& document, DocumentStatus status, const vector<int>& ratings);
 
@@ -29,17 +29,24 @@ public:
     vector<Document>  FindTopDocuments(const string& raw_query, DocumentPredicate document_predicate) const;
 
     vector<Document> FindTopDocuments(const string& raw_query, DocumentStatus status) const;
-    
+
     vector<Document> FindTopDocuments(const string& raw_query) const;
 
     int GetDocumentCount() const;
 
     tuple<vector<string>, DocumentStatus> MatchDocument(const string& raw_query, int document_id) const;
 
+    const map<string, double>& GetWordFrequencies(int document_id) const;
+
+    void RemoveDocument(int document_id);
+
+    void RemoveDuplicates();
+
 private:
     struct DocumentData {
         int rating;
         DocumentStatus status;
+        map<string, double> word_freqs;
     };
     const set<string> stop_words_;
     map<string, map<int, double>> word_to_document_freqs_;
@@ -78,6 +85,8 @@ private:
     static void AreValidWords(const StringContainer& words);
 };
 
+void AddDocument(SearchServer& search_server, int document_id, const string& document, DocumentStatus status, const vector<int>& ratings);
+
 template <typename StringContainer>
 SearchServer::SearchServer(const StringContainer& stop_words)
     :stop_words_(MakeUniqueNonEmptyStrings(stop_words)) {
@@ -86,7 +95,7 @@ SearchServer::SearchServer(const StringContainer& stop_words)
 
 template <typename DocumentPredicate>
 vector<Document> SearchServer::FindTopDocuments(const string& raw_query, DocumentPredicate document_predicate) const {
-    LOG_DURATION_STREAM("Operation time"s, cout);
+    LOG_DURATION_STREAM("Operation time"s, cerr);
 
     const Query query = ParseQuery(raw_query);
     vector<Document> result = FindAllDocuments(query, document_predicate);
@@ -100,23 +109,23 @@ vector<Document> SearchServer::FindTopDocuments(const string& raw_query, Documen
                 return lhs.relevance > rhs.relevance;
             }
         });
-    
+
     if (result.size() > MAX_RESULT_DOCUMENT_COUNT) {
         result.resize(MAX_RESULT_DOCUMENT_COUNT);
     }
-    
+
     return result;
 }
 
 template <typename DocumentPredicate>
 vector<Document> SearchServer::FindAllDocuments(const Query& query, DocumentPredicate document_predicate) const {
     map<int, double> document_to_relevance;
-        
+
     for (const string& word : query.plus_words) {
         if (word_to_document_freqs_.count(word) == 0) {
             continue;
         }
-            
+
         const double inverse_document_freq = ComputeWordInverseDocumentFreq(word);
         for (const auto [document_id, term_freq] : word_to_document_freqs_.at(word)) {
             const auto& document_data = documents_.at(document_id);
@@ -130,7 +139,7 @@ vector<Document> SearchServer::FindAllDocuments(const Query& query, DocumentPred
         if (word_to_document_freqs_.count(word) == 0) {
             continue;
         }
-            
+
         for (const auto [document_id, _] : word_to_document_freqs_.at(word)) {
             document_to_relevance.erase(document_id);
         }
@@ -140,7 +149,7 @@ vector<Document> SearchServer::FindAllDocuments(const Query& query, DocumentPred
     for (const auto [document_id, relevance] : document_to_relevance) {
         matched_documents.push_back({ document_id, relevance, documents_.at(document_id).rating });
     }
-       
+
     return matched_documents;
 }
 
