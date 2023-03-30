@@ -7,11 +7,11 @@ SearchServer::SearchServer(const string& stop_words_text)
     : SearchServer(SplitIntoWords(stop_words_text)) {
 }
 
-vector<int>::iterator SearchServer::begin() {
+set<int>::iterator SearchServer::begin() {
     return document_ids_.begin();
 }
 
-vector<int>::iterator SearchServer::end() {
+set<int>::iterator SearchServer::end() {
     return document_ids_.end();
 }
 
@@ -20,9 +20,11 @@ void SearchServer::AddDocument(int document_id, const string& document, Document
 
     if (documents_.count(document_id) > 0) {
         throw invalid_argument("Document has already been added"s);
-    } if (document_id < 0) {
+    } 
+    if (document_id < 0) {
         throw invalid_argument("Document ID is negative"s);
-    } if (!(IsValidWord(document))) {
+    } 
+    if (!(IsValidWord(document))) {
         throw invalid_argument("Document text contains special characters"s);
     }
 
@@ -32,9 +34,10 @@ void SearchServer::AddDocument(int document_id, const string& document, Document
     for (const string& word : words) {
         word_to_document_freqs_[word][document_id] += inv_word_count;
         word_freqs[word] += inv_word_count;
+        document_to_freqs_[document_id][word] += inv_word_count;
     }
     documents_.emplace(document_id, DocumentData{ ComputeAverageRating(ratings), status, word_freqs });
-    document_ids_.push_back(document_id);
+    document_ids_.insert(document_id);
 }
 
 void AddDocument(SearchServer& search_server, int document_id, const string& document, DocumentStatus status, const vector<int>& ratings) {
@@ -58,8 +61,6 @@ int SearchServer::GetDocumentCount() const {
 
 tuple<vector<string>, DocumentStatus> SearchServer::MatchDocument(const string& raw_query, int document_id) const {
     vector<string> matched_words;
-    LOG_DURATION_STREAM("Operation time"s, cerr);
-
     const Query query = ParseQuery(raw_query);
 
     for (const string& word : query.plus_words) {
@@ -111,14 +112,15 @@ SearchServer::QueryWord SearchServer::ParseQueryWord(string text) const {
     if (!IsValidWord(text)) {
         throw invalid_argument("Query contains special characters"s);
     }
-    else if (text == "-"s) {
-        throw invalid_argument("Empty minus-word"s);
-    }
-    else if (text[0] == '-' && text[1] == '-') {
-        throw invalid_argument("Found more than one minus before the word"s);
-    }
 
     if (text[0] == '-') {
+        if (text.size() == 1) {
+            throw invalid_argument("Empty minus-word"s);
+        }
+        else if (text[0] == '-' && text[1] == '-') {
+            throw invalid_argument("Found more than one minus before the word"s);
+        }
+
         is_minus = true;
         text = text.substr(1);
     }
@@ -155,45 +157,18 @@ bool SearchServer::IsValidWord(const string& word) {
 }
 
 const map<string, double>& SearchServer::GetWordFrequencies(int document_id) const {
-    return documents_.at(document_id).word_freqs;
+    if (documents_.count(document_id) > 0) {
+        return document_to_freqs_.at(document_id);
+    }
+
+    return EMPTY_MAP;
 }
 
 void SearchServer::RemoveDocument(int document_id) {
-    document_ids_.erase(remove(document_ids_.begin(), document_ids_.end(), document_id), document_ids_.end());
+    for (const auto& [word, freq] : GetWordFrequencies(document_id)) {
+        word_to_document_freqs_.at(word).erase(document_id);
+    }
+
     documents_.erase(document_id);
-
-    for (auto& [word, doc] : word_to_document_freqs_) {
-        doc.erase(document_id);
-    }
-}
-
-void SearchServer::RemoveDuplicates() {
-    set<int> duplicate_ids;
-
-    auto compare_words_set = [](const map<string, double>& lhs, const map<string, double>& rhs) {
-        
-        auto compare_words = [](const pair<string, double> lhs, const pair<string, double> rhs) {
-            return lhs.first == rhs.first;
-        };
-
-        return lhs.size() == rhs.size()
-            && std::equal(lhs.begin(), lhs.end(),
-                rhs.begin(),
-                compare_words);
-    };
-
-    for (auto it = this->begin(); it != this->end() - 1; ++it) {
-        for (auto it2 = it + 1; it2 != this->end(); ++it2) {
-            if (it != it2) {
-                if (compare_words_set(documents_.at(*it).word_freqs, documents_.at(*it2).word_freqs)) {
-                    duplicate_ids.insert(*it2);
-                }
-            }
-        }
-    }
-
-    for (const int duplicate : duplicate_ids) {
-        cout << "Found duplicate document id "s << duplicate << endl;
-        RemoveDocument(duplicate);
-    }
+    document_ids_.erase(document_id);
 }

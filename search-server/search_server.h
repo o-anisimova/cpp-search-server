@@ -11,6 +11,7 @@ using namespace std;
 
 const int MAX_RESULT_DOCUMENT_COUNT = 5;
 const double ELIPSON = 1e-6;
+const map<string, double> EMPTY_MAP = {};
 
 class SearchServer {
 public:
@@ -19,17 +20,15 @@ public:
 
     explicit SearchServer(const string& stop_words_text);
 
-    vector<int>::iterator begin();
+    set<int>::iterator begin();
 
-    vector<int>::iterator end();
+    set<int>::iterator end();
 
     void AddDocument(int document_id, const string& document, DocumentStatus status, const vector<int>& ratings);
 
     template <typename DocumentPredicate>
-    vector<Document>  FindTopDocuments(const string& raw_query, DocumentPredicate document_predicate) const;
-
+    vector<Document> FindTopDocuments(const string& raw_query, DocumentPredicate document_predicate) const;
     vector<Document> FindTopDocuments(const string& raw_query, DocumentStatus status) const;
-
     vector<Document> FindTopDocuments(const string& raw_query) const;
 
     int GetDocumentCount() const;
@@ -40,8 +39,6 @@ public:
 
     void RemoveDocument(int document_id);
 
-    void RemoveDuplicates();
-
 private:
     struct DocumentData {
         int rating;
@@ -50,8 +47,9 @@ private:
     };
     const set<string> stop_words_;
     map<string, map<int, double>> word_to_document_freqs_;
+    map<int, map<string, double>> document_to_freqs_;
     map<int, DocumentData> documents_;
-    vector<int> document_ids_;
+    set<int> document_ids_;
 
     bool IsStopWord(const string& word) const;
 
@@ -95,8 +93,6 @@ SearchServer::SearchServer(const StringContainer& stop_words)
 
 template <typename DocumentPredicate>
 vector<Document> SearchServer::FindTopDocuments(const string& raw_query, DocumentPredicate document_predicate) const {
-    LOG_DURATION_STREAM("Operation time"s, cerr);
-
     const Query query = ParseQuery(raw_query);
     vector<Document> result = FindAllDocuments(query, document_predicate);
 
