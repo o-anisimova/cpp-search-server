@@ -47,7 +47,6 @@ private:
     };
     const set<string> stop_words_;
     map<string, map<int, double>> word_to_document_freqs_;
-    map<int, map<string, double>> document_to_freqs_;
     map<int, DocumentData> documents_;
     set<int> document_ids_;
 

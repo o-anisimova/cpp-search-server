@@ -34,7 +34,6 @@ void SearchServer::AddDocument(int document_id, const string& document, Document
     for (const string& word : words) {
         word_to_document_freqs_[word][document_id] += inv_word_count;
         word_freqs[word] += inv_word_count;
-        document_to_freqs_[document_id][word] += inv_word_count;
     }
     documents_.emplace(document_id, DocumentData{ ComputeAverageRating(ratings), status, word_freqs });
     document_ids_.insert(document_id);
@@ -158,7 +157,7 @@ bool SearchServer::IsValidWord(const string& word) {
 
 const map<string, double>& SearchServer::GetWordFrequencies(int document_id) const {
     if (documents_.count(document_id) > 0) {
-        return document_to_freqs_.at(document_id);
+        return documents_.at(document_id).word_freqs;
     }
 
     return EMPTY_MAP;
