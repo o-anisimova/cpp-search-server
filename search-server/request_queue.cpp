@@ -1,5 +1,7 @@
 #include "request_queue.h"
 
+using namespace std;
+
 RequestQueue::RequestQueue(SearchServer& search_server)
     :search_server_(search_server), empty_requests_cnt_(0){
 }

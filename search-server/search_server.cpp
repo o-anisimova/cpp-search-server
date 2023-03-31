@@ -3,6 +3,8 @@
 #include <cmath>
 #include <algorithm>
 
+using namespace std;
+
 SearchServer::SearchServer(const string& stop_words_text)
     : SearchServer(SplitIntoWords(stop_words_text)) {
 }
@@ -159,8 +161,9 @@ const map<string, double>& SearchServer::GetWordFrequencies(int document_id) con
     if (documents_.count(document_id) > 0) {
         return documents_.at(document_id).word_freqs;
     }
-
-    return EMPTY_MAP;
+    
+    static map<string, double> empty_map = {};
+    return empty_map;
 }
 
 void SearchServer::RemoveDocument(int document_id) {
