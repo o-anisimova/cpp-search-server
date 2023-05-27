@@ -2,23 +2,22 @@
 
 using namespace std;
 
-vector<string> SplitIntoWords(const string& text) {
-    vector<string> words;
-    string word;
-    for (const char c : text) {
-        if (c == ' ') {
-            if (!word.empty()) {
-                words.push_back(word);
-                word.clear();
-            }
-        }
-        else {
-            word += c;
-        }
+vector<string_view> SplitIntoWords(string_view text) {
+    vector<string_view> result;
+    /*Создаём переменную, где будем сохранять начальную позицию для поиска следующего пробела. Иначе говоря, начало слова. Устанавливаем её на позицию первого непробельного символа.*/
+    int64_t pos = text.find_first_not_of(" ");
+    /*Чтобы остановить поиск, нужен аналог итератора на конец. У string и string_view такую роль выполняет npos — специальная константа класса. 
+    Внутри это просто большое число, которое вряд ли когда-нибудь сможет оказаться реальной позицией в строке.*/
+    const int64_t pos_end = text.npos;
+    /*Используем цикл.Выходим из него, если не удалось найти непробельный символ.*/
+    while (pos != pos_end) {
+        /*В цикле ищем следующий пробел, вызывая метод find, который вернёт позицию ближайшего пробела, или npos, если пробел не найден.*/
+        int64_t space = text.find(' ', pos);
+        /*Метод substr для string_view возвращает string_view, то есть новая строка не создаётся.Просто продолжаем с указателями на уже имеющуюся строку.
+        Если пробел не найден, добавляем в вектор всё, начиная с pos.Если найден, выделяем слово от pos длиной space - pos.*/
+        result.push_back(space == pos_end ? text.substr(pos) : text.substr(pos, space - pos));
+        /*Достигнув конца строки, выходим из цикла.Иначе, пропускаем одну позицию — пробел — и начинаем следующую итерацию цикла.*/
+        pos = text.find_first_not_of(" ", space);
     }
-    if (!word.empty()) {
-        words.push_back(word);
-    }
-
-    return words;
+    return result;
 }

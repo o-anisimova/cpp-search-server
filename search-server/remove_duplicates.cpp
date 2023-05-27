@@ -5,11 +5,11 @@ using namespace std;
 void RemoveDuplicates(SearchServer& search_server) {
     set<int> duplicate_ids;
 
-    set<set<string>> word_sets;
+    set<set<string_view>> word_sets;
 
     for (const int document_id : search_server) {
 
-        set<string> word_set;
+        set<string_view> word_set;
         for (const auto& [word, freq] : search_server.GetWordFrequencies(document_id)) {
             word_set.insert(word);
         }
