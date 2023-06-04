@@ -17,6 +17,10 @@ public:
         : id_(id), output_(output){
     }
 
+    LogDuration(const std::string_view id, std::ostream& output = std::cerr)
+        : id_(id), output_(output) {
+    }
+
     ~LogDuration() {
         using namespace std::chrono;
         using namespace std::literals;
