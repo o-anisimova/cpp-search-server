@@ -27,28 +27,31 @@ void SearchServer::AddDocument(int document_id, string_view document, DocumentSt
     //¬алидации
     if (documents_.count(document_id) > 0) {
         throw invalid_argument("Document has already been added"s);
-    } 
+    }
     if (document_id < 0) {
         throw invalid_argument("Document ID is negative"s);
-    } 
+    }
     if (!(IsValidWord(document))) {
         throw invalid_argument("Document text contains special characters"s);
     }
 
+    document_ids_.insert(document_id);
+    documents_.emplace(document_id, DocumentData{});
+
     //ƒобавл€ем документ в хранилище
-    storage_.emplace_back(document);
+    documents_[document_id].content = static_cast<string>(document);
+    documents_[document_id].rating = ComputeAverageRating(ratings);
+    documents_[document_id].status = status;
+
 
     //–азбиваем документ на слова (с исключением стоп-слов)
     //string_view в векторе уже ссылаетс€ на документ из хранилища
-    const vector<string_view> words = SplitIntoWordsNoStop(storage_.back());
+    const vector<string_view> words = SplitIntoWordsNoStop(documents_[document_id].content);
     const double inv_word_count = 1.0 / words.size();
-    map<string_view, double> word_freqs;
     for (string_view word : words) {
         word_to_document_freqs_[word][document_id] += inv_word_count;
-        word_freqs[word] += inv_word_count;
+        documents_[document_id].word_freqs[word] += inv_word_count;
     }
-    documents_.emplace(document_id, DocumentData{ ComputeAverageRating(ratings), status, word_freqs });
-    document_ids_.insert(document_id);
 }
 
 void AddDocument(SearchServer& search_server, int document_id, string_view document, DocumentStatus status, const vector<int>& ratings) {
@@ -56,35 +59,11 @@ void AddDocument(SearchServer& search_server, int document_id, string_view docum
 }
 
 vector<Document> SearchServer::FindTopDocuments(string_view raw_query, DocumentStatus status) const {
-    return FindTopDocuments(raw_query, 
-        [status](int document_id, DocumentStatus document_status, int rating) {
-            return document_status == status;
-        }
-    );
-}
-
-std::vector<Document> SearchServer::FindTopDocuments(std::execution::sequenced_policy seq, std::string_view raw_query, DocumentStatus status) const {
-    return FindTopDocuments(raw_query, status);
-}
-
-std::vector<Document> SearchServer::FindTopDocuments(std::execution::parallel_policy par, std::string_view raw_query, DocumentStatus status) const {
-    return FindTopDocuments(par, raw_query, 
-        [status](int document_id, DocumentStatus document_status, int rating) {
-            return document_status == status;
-        }
-    );
+    return FindTopDocuments(std::execution::seq, raw_query, status);
 }
 
 vector<Document> SearchServer::FindTopDocuments(string_view raw_query) const {
-    return FindTopDocuments(raw_query, DocumentStatus::ACTUAL);
-}
-
-vector<Document> SearchServer::FindTopDocuments(std::execution::sequenced_policy seq, string_view raw_query) const {
-    return FindTopDocuments(raw_query);
-}
-
-vector<Document> SearchServer::FindTopDocuments(std::execution::parallel_policy par, string_view raw_query) const {
-    return FindTopDocuments(par, raw_query, DocumentStatus::ACTUAL);
+    return FindTopDocuments(std::execution::seq, raw_query);
 }
 
 
